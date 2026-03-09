@@ -5,3 +5,4 @@ jinja2
 markdown2
 pdfkit
 wkhtmltopdf
+sounddevice
