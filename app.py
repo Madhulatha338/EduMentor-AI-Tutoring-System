@@ -1,8 +1,7 @@
 # ======================================
-# app.py — EduMentor (Offline Simulation Mode)
+# app.py — EduMentor (Cloud + Local Voice Support)
 # ======================================
 
-from voice_assistant import listen, speak
 import os
 import streamlit as st
 from PIL import Image
@@ -10,15 +9,26 @@ from api_handler import send_query_get_response
 from chat_gen import generate_html
 
 # ==============================
+# Voice Assistant Import (Safe Mode)
+# ==============================
+try:
+    from voice_assistant import listen, speak
+    VOICE_AVAILABLE = True
+except Exception:
+    VOICE_AVAILABLE = False
+
+
+# ==============================
 # App Setup
 # ==============================
-st.set_page_config(page_title="EduMentor - Offline AI Tutor", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="EduMentor AI Tutor", page_icon="🎓", layout="wide")
 
 # Load logo
 try:
-    logo = Image.open('logo.png')
+    logo = Image.open("logo.png")
 except:
     logo = None
+
 
 # ==============================
 # Header
@@ -32,16 +42,21 @@ with c1:
 with c2:
     st.title("EduMentor : An AI-Enhanced Tutoring System")
 
-# Description
 st.markdown("## 🧠 AI Tutor Description")
-st.markdown("""
-EduMentor simulates an intelligent AI tutor that helps students learn and review 
-subjects like **Science**, **Mathematics**, and **Geography**.  
-This offline demo version shows all the app's features **without needing the internet or an API key**.
-""")
+st.markdown(
+"""
+EduMentor simulates an intelligent AI tutor that helps students learn and review
+subjects like **Science**, **Mathematics**, and **Geography**.
 
-# Offline mode
-st.success("✅ Running in OFFLINE SIMULATION MODE — no API key needed.")
+This demo version supports:
+- Text based tutoring
+- File based learning
+- Optional voice interaction (local environments only)
+"""
+)
+
+# Offline info
+st.success("✅ EduMentor Tutor Ready")
 
 # ==============================
 # File Upload
@@ -54,26 +69,32 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
+
     save_path = os.path.join(os.getcwd(), uploaded_file.name)
 
     with open(save_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
     st.success(f"✅ File '{uploaded_file.name}' uploaded successfully!")
+
     st.session_state["uploaded_file_path"] = save_path
 
 else:
     st.session_state.setdefault("uploaded_file_path", None)
 
+
 # ==============================
 # Sidebar
 # ==============================
-st.sidebar.header("EduMentor: AI-Tutor")
+st.sidebar.header("EduMentor AI Tutor")
 
 if logo:
     st.sidebar.image(logo, width=120)
 
-st.sidebar.caption("Offline Demo Version")
+if VOICE_AVAILABLE:
+    st.sidebar.success("🎤 Voice assistant enabled (local mode)")
+else:
+    st.sidebar.info("💬 Voice assistant disabled in cloud mode")
 
 # Download chat history
 if st.sidebar.button("📄 Generate Chat History"):
@@ -92,6 +113,7 @@ if st.sidebar.button("📄 Generate Chat History"):
     else:
         st.sidebar.warning("No chat messages yet!")
 
+
 # ==============================
 # Chat Section
 # ==============================
@@ -100,43 +122,46 @@ st.subheader("💬 Q&A with AI Tutor")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Show chat history
+# Display chat history
 for message in st.session_state.messages:
+
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+
 # ==============================
-# Text Input
+# Text Question Input
 # ==============================
 prompt = st.chat_input("Ask your question here...")
 
+
 # ==============================
-# Voice Input
+# Voice Input (Local Only)
 # ==============================
-if st.button("🎤 Ask Question by Voice"):
+if VOICE_AVAILABLE:
 
-    st.info("Listening... Please speak.")
+    if st.button("🎤 Ask Question by Voice"):
 
-    voice_prompt = listen()
+        st.info("Listening... Please speak.")
 
-    if voice_prompt:
+        voice_prompt = listen()
 
-        st.write("🗣️ You asked:", voice_prompt)
+        if voice_prompt:
 
-        st.session_state.messages.append(
-            {"role": "user", "content": voice_prompt}
-        )
+            st.write("🗣️ You asked:", voice_prompt)
 
-        with st.chat_message("user"):
-            st.markdown(voice_prompt)
+            st.session_state.messages.append(
+                {"role": "user", "content": voice_prompt}
+            )
 
-        with st.chat_message("assistant", avatar="👨🏻‍🏫"):
+            with st.chat_message("user"):
+                st.markdown(voice_prompt)
 
-            message_placeholder = st.empty()
+            with st.chat_message("assistant", avatar="👨🏻‍🏫"):
 
-            with st.spinner("Thinking..."):
+                message_placeholder = st.empty()
 
-                try:
+                with st.spinner("Thinking..."):
 
                     response = send_query_get_response(
                         None,
@@ -150,11 +175,8 @@ if st.button("🎤 Ask Question by Voice"):
                         {"role": "assistant", "content": response}
                     )
 
-                    # Speak answer
                     speak(response)
 
-                except Exception as e:
-                    st.error(f"⚠️ Error: {e}")
 
 # ==============================
 # Text Question Handling
@@ -174,29 +196,27 @@ if prompt:
 
         with st.spinner("Thinking..."):
 
-            try:
+            response = send_query_get_response(
+                None,
+                prompt,
+                file_path=st.session_state.get("uploaded_file_path")
+            )
 
-                response = send_query_get_response(
-                    None,
-                    prompt,
-                    file_path=st.session_state.get("uploaded_file_path")
-                )
+            message_placeholder.markdown(response)
 
-                message_placeholder.markdown(response)
+            st.session_state.messages.append(
+                {"role": "assistant", "content": response}
+            )
 
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": response}
-                )
-
-                # Speak answer
+            if VOICE_AVAILABLE:
                 speak(response)
 
-            except Exception as e:
-                st.error(f"⚠️ Error generating response: {e}")
 
 # ==============================
 # Footer
 # ==============================
 st.divider()
 
-st.caption("🎓 EduMentor © 2025 | Built with ❤️ using Python & Streamlit | Offline Demo Version")
+st.caption(
+"🎓 EduMentor © 2025 | Built with ❤️ using Python & Streamlit"
+)
