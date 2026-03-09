@@ -1,4 +1,4 @@
-# AI-Tutor: Customized AI Tutoring for Diverse Academic Courses
+# # EduMentor AI – Enhanced Tutoring System
 
 <div align="center">
     <img src="sb_logo.png" alt="AI_Tutor" width="200"/>
@@ -67,3 +67,4 @@ AI-Tutor employs a combination of advanced AI technologies to enhance the learni
 - [Introduction to Retrieval-Augmented Generation (RAG)](https://www.datastax.com/blog/2020/10/introducing-retrieval-augmented-generation-rag)
 - [Vector Database Similarity Search](https://www.infoworld.com/article/3634357/what-is-vector-search-better-search-through-ai.html)
 - [OpenAI Privacy and Security Practices](https://openai.com/security)
+
