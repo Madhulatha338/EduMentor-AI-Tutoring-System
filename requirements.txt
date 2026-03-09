@@ -6,3 +6,9 @@ markdown2
 pdfkit
 wkhtmltopdf
 sounddevice
+pandas
+numpy
+tiktoken
+python-dotenv
+PyPDF2
+pillow
